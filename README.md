@@ -6,11 +6,12 @@
 2. Use OpenCV
 3. for yolo segment
 
-[Netron is a viewer for neural network, deep learning and machine learning models.](https://netron.app/)
+## vendor
+
+- [Netron is a viewer for neural network, deep learning and machine learning models.](https://netron.app/)
+- base64: https://github.com/ReneNyffenegger/cpp-base64/
 
 ## Usage
-
-base64: https://github.com/ReneNyffenegger/cpp-base64/
 
 install yolo:
 
@@ -26,4 +27,9 @@ yolo export model=yolo11n-seg.pt format=onnx
 
 use Netron:
 
-![onnx info](README/onnx-info.png)
+![onnx info](README/onnx-info.jpg)
+
+result:
+
+![yolo11 segment](README/result.jpg)
+
