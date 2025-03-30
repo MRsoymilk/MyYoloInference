@@ -51,7 +51,7 @@ int main() {
   }
 
   loadModel("../examples/res/yolo11n-seg.onnx");
-  inference("../examples/res/apple.jpg", "result.png");
+  inference("../examples/res/apple.jpg", "result.jpg");
 
 #ifdef _WIN32
   FreeLibrary(handle);

@@ -180,6 +180,7 @@ void drawInfo(cv::Mat img, std::vector<YoloResults>& results,
     // Draw mask if available
     if (res.mask.rows && res.mask.cols > 0) {
       mask(res.bbox).setTo(colors(res.class_idx), res.mask);
+      cv::addWeighted(img, 0.6, mask, 0.4, 0, img);
     }
     // Create label
     std::stringstream labelStream;
@@ -195,7 +196,6 @@ void drawInfo(cv::Mat img, std::vector<YoloResults>& results,
     cv::putText(img, label, cv::Point(left - 1.5, top - 2.5),
                 cv::FONT_HERSHEY_SIMPLEX, 0.6, text_color, 2);
   }
-  cv::addWeighted(img, 0.6, mask, 0.4, 0, img);
 }
 
 const int DEFAULT_LETTERBOX_PAD_VALUE = 114;
@@ -408,22 +408,29 @@ std::vector<YoloResults> handleOutput(cv::Mat& output_box,
   cv::dnn::NMSBoxes(boxes, confidences, m_info.confidence_threshold,
                     m_info.nms_threshold, nms_result);
 
-  // select all of the protos tensor
-  cv::Size downsampled_size = cv::Size(m_info.mask_width, m_info.mask_height);
-  std::vector<cv::Range> roi_rangs = {cv::Range(0, 1), cv::Range::all(),
-                                      cv::Range(0, downsampled_size.height),
-                                      cv::Range(0, downsampled_size.width)};
-  cv::Mat temp_mask = output_segment(roi_rangs).clone();
-  cv::Mat proto = temp_mask.reshape(
-      0,
-      {m_info.mask_features, downsampled_size.width * downsampled_size.height});
+  cv::Mat proto;
+  if (!output_segment.empty()) {
+    // select all of the protos tensor
+    cv::Size downsampled_size = cv::Size(m_info.mask_width, m_info.mask_height);
+    std::vector<cv::Range> roi_rangs = {cv::Range(0, 1), cv::Range::all(),
+                                        cv::Range(0, downsampled_size.height),
+                                        cv::Range(0, downsampled_size.width)};
+    cv::Mat temp_mask = output_segment(roi_rangs).clone();
+    proto = temp_mask.reshape(
+        0, {m_info.mask_features,
+            downsampled_size.width * downsampled_size.height});
+  }
+
   for (int i = 0; i < nms_result.size(); ++i) {
     int idx = nms_result[i];
     boxes[idx] = boxes[idx] & cv::Rect(0, 0, image.cols, image.rows);
     YoloResults result = {class_ids[idx], confidences[idx], boxes[idx]};
-    result.mask = getMask(cv::Mat(masks[idx]).t(), proto, image, boxes[idx]);
+    if (!output_segment.empty()) {
+      result.mask = getMask(cv::Mat(masks[idx]).t(), proto, image, boxes[idx]);
+    }
     output.emplace_back(result);
   }
+
   return output;
 }
 
@@ -498,16 +505,22 @@ std::vector<YoloResults> runInterface(const cv::Mat& img) {
     std::cerr << e.what() << std::endl;
   }
 
-  cv::Mat output_boxes = outputs[0];
-  cv::Mat output_masks = outputs[1];
+  cv::Mat output_boxes, output_masks;
+  output_boxes = outputs[0];
+  if (outputs.size() > 1) {
+    output_masks = outputs[1];
+  }
   std::vector<int64_t> box_shape = {
       output_boxes.size[0], output_boxes.size[1],
       output_boxes.size[2]};  // [bs, features, preds_num]
   cv::Mat output_box = output_boxes.reshape(1, box_shape[1]).t();
-  auto mask_shape = output_masks.size;
-  m_info.mask_features = mask_shape[1];
-  m_info.mask_height = mask_shape[2];
-  m_info.mask_width = mask_shape[3];
+  if (outputs.size() > 1) {
+    auto mask_shape = output_masks.size;
+    m_info.mask_features = mask_shape[1];
+    m_info.mask_height = mask_shape[2];
+    m_info.mask_width = mask_shape[3];
+  }
+
   std::vector<YoloResults> results =
       handleOutput(output_box, output_masks, image);
   return results;
@@ -619,8 +632,10 @@ class MyYoloInference::Impl {
     cv::imwrite(output_path, image);
     for (int i = 0; i < results.size(); ++i) {
       cv::Mat mask = results.at(i).mask;
-      cv::imshow(std::to_string(i), mask);
-      cv::imwrite("mask_" + std::to_string(i) + ".png", mask);
+      if (!mask.empty()) {
+        cv::imshow(std::to_string(i), mask);
+        cv::imwrite("mask_" + std::to_string(i) + ".png", mask);
+      }
     }
     cv::waitKey();
     return true;
