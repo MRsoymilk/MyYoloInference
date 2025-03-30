@@ -1,4 +1,9 @@
-# Yolo Interface
+# Yolo Inference
+
+## Current Support
+
+- YOLO Detect Inference
+- YOLO Segment Inference
 
 ## Requirement
 
