@@ -3,10 +3,10 @@
 #include <fstream>
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include <regex>
 #include <string>
 #include <vector>
 
+#include "metadata.h"
 #include "vendor/base64.h"
 
 namespace my_yolo {
@@ -38,101 +38,13 @@ detect_info m_info;
 
 cv::dnn::Net m_net;
 bool m_loaded = false;
-std::unordered_map<std::string, std::string> m_metadata;
+// std::unordered_map<std::string, std::string> m_metadata;
 
 cv::Mat getMask(const cv::Mat& masks_features, const cv::Mat& proto,
                 const cv::Mat& image, const cv::Rect bound);
 std::vector<YoloResults> handleOutput(cv::Mat& output_box,
                                       cv::Mat& output_segment, cv::Mat& image);
 cv::Mat letterbox(const cv::Mat& img);
-
-std::string readFileTail(const std::string& filePath, size_t tailSize = 2048) {
-  std::ifstream file(filePath, std::ios::binary | std::ios::ate);
-  if (!file.is_open()) {
-    std::cerr << "Failed to open the file!" << std::endl;
-    return "";
-  }
-
-  size_t fileSize = file.tellg();
-  if (fileSize < tailSize) {
-    tailSize = fileSize;
-  }
-
-  file.seekg(fileSize - tailSize, std::ios::beg);
-
-  std::string fileTail(tailSize, '\0');
-  file.read(&fileTail[0], tailSize);
-  file.close();
-
-  return fileTail;
-}
-
-uint32_t decodeULEB128(int& jmp, const std::string& data, const int& begin) {
-  uint32_t result = 0;
-  int shift = 0;
-  int pos = begin;
-
-  while (pos < data.size()) {
-    uint8_t byte = static_cast<uint8_t>(data[pos]);
-    pos++;
-    // extract the lower 7 bits and merge
-    result |= (byte & 0x7F) << shift;
-    // break if MSB is 0
-    if ((byte & 0x80) == 0) {
-      break;
-    }
-    shift += 7;
-    jmp += 1;
-  }
-
-  return result;
-}
-
-std::vector<std::string> v_key{"description", "author", "date",   "version",
-                               "license",     "docs",   "stride", "task",
-                               "batch",       "imgsz",  "names",  "args"};
-
-std::string extract(int& begin, const std::string& data,
-                    const std::string& key) {
-  int JMP = 2;
-  int size = decodeULEB128(JMP, data, begin + 1);
-  std::string str = data.substr(begin + 2, size);
-  std::string val = str.substr(JMP + key.size() + JMP);
-  begin += JMP + size;
-  return val;
-}
-
-void analysis(std::string data) {
-  int begin = 0;
-
-  std::unordered_map<std::string, std::string> metadata;
-  for (size_t i = 0; i < v_key.size(); ++i) {
-    metadata[v_key[i]] = extract(begin, data, v_key[i]);
-  }
-
-  std::smatch match;
-  std::regex re_imgsz(R"(\[(\d+),\s*(\d+)\])");
-  if (std::regex_match(metadata["imgsz"], match, re_imgsz)) {
-    int height = std::stoi(match[1].str());
-    int width = std::stoi(match[2].str());
-    std::cout << "Height: " << height << ", Width: " << width << std::endl;
-    m_info.model_height = height;
-    m_info.model_width = width;
-  } else {
-    std::cout << "Invalid format!" << std::endl;
-  }
-
-  std::regex re_names(R"('([^']+)')");
-  auto iter = metadata["names"].cbegin();
-  std::vector<std::string> list;
-  while (std::regex_search(iter, metadata["names"].cend(), match, re_names)) {
-    std::cout << match[1] << std::endl;
-    list.push_back(match[1].str());
-    iter = match[0].second;
-  }
-  m_info.class_names = list;
-  m_info.nc = m_info.class_names.size();
-}
 
 std::vector<cv::Scalar> COLORS = {
     cv::Scalar(0, 255, 0),      // class 0 - Green
@@ -569,16 +481,17 @@ class MyYoloInference::Impl {
     if (m_loaded) {
       return true;
     }
-    std::string metadata = readFileTail(path, metadata_size);
-    int loc = metadata.find("description");
-    if (loc != std::string::npos) {
-      int start = loc - 4;
-      analysis(metadata.substr(start));
-      std::cerr << "No Description Found!" << std::endl;
-      std::cerr << "Please set classes and model size manullay!(or increate "
-                   "read size and try again)"
-                << std::endl;
+    Metadata metadata;
+    std::string data = metadata.readFileTail(path, metadata_size);
+    if (data.empty()) {
+      std::cerr << "no description found!" << std::endl;
+      return false;
     }
+    metadata.analysis(data);
+    m_info.class_names = metadata.getNames();
+    m_info.nc = m_info.class_names.size();
+    m_info.model_height = metadata.getImgsz().h;
+    m_info.model_width = metadata.getImgsz().w;
 
     std::ifstream file(path, std::ios::binary);
     if (!file) {
@@ -638,6 +551,7 @@ class MyYoloInference::Impl {
       }
     }
     cv::waitKey();
+    m_net = cv::dnn::Net();
     return true;
   }
 
@@ -688,8 +602,8 @@ MyYoloInference& MyYoloInference::getInstance() {
 
 MyYoloInference::~MyYoloInference() { delete m_impl; }
 
-bool MyYoloInference::loadModel(const char* path) {
-  return m_impl->loadModel(path);
+bool MyYoloInference::loadModel(const char* path, const int& metadata_size) {
+  return m_impl->loadModel(path, metadata_size);
 }
 
 bool MyYoloInference::inference(const char* input_path,
@@ -715,8 +629,25 @@ void MyYoloInference::setClasses(const char** classes, const int& count) {
 
 }  // namespace my_yolo
 
-bool loadModel(const char* path) { return MY_YOLO.loadModel(path); }
+bool loadModel(const char* path, int metadata_size) {
+  if (metadata_size == 0) {
+    metadata_size = 2048;
+  }
+  return MY_YOLO.loadModel(path, metadata_size);
+}
 
 bool inference(const char* input_path, const char* output_path) {
   return MY_YOLO.inference(input_path, output_path);
+}
+
+void setModelImgSize(int width, int height) {
+  MY_YOLO.setModelImgSize(width, height);
+}
+
+void setNMS(float threshold) { MY_YOLO.setNMS(threshold); }
+
+void setConfidence(float threshold) { MY_YOLO.setConfidence(threshold); }
+
+void setClasses(const char** classes, int count) {
+  MY_YOLO.setClasses(classes, count);
 }

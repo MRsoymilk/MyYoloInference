@@ -4,6 +4,8 @@ add_library(MyYoloInference SHARED
     my-yolo-inference.cpp
     vendor/base64.h
     vendor/base64.cpp
+    metadata.h
+    metadata.cpp
 )
 
 target_include_directories(MyYoloInference PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
