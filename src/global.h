@@ -1,9 +1,8 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#if defined(_MSC_VER) || defined(WIN64) || defined(_WIN64) ||  \
-    defined(__WIN64__) || defined(WIN32) || defined(_WIN32) || \
-    defined(__WIN32__) || defined(__NT__)
+#if defined(_MSC_VER) || defined(WIN64) || defined(_WIN64) || defined(__WIN64__) || defined(WIN32) || \
+    defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define MYYOLOINFERENCE_EXPORT __declspec(dllexport)
 #define MYYOLOINFERENCE_IMPORT __declspec(dllimport)
 #else
