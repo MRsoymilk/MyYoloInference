@@ -13,10 +13,19 @@
 1. `.onnx` format
 2. Use OpenCV
 
-## vendor
+## Vendor
 
 - [Netron is a viewer for neural network, deep learning and machine learning models.](https://netron.app/)
-- base64: https://github.com/ReneNyffenegger/cpp-base64/
+
+## Usage
+
+```bash
+mkdir build
+cmake ..
+make -j7
+./test_explict # explic usage of MyYoloInference library
+./test_implict # implic usage of MyYoloInference library
+```
 
 ## Result
 
