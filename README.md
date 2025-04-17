@@ -11,7 +11,7 @@
 ## Requirement
 
 1. `.onnx` format
-2. Use OpenCV
+2. Use OpenCV(>= 4.8, Otherwise, some parts may need to be modified)
 
 ## Vendor
 
@@ -24,6 +24,7 @@
 
 ```bash
 mkdir build
+cd build
 cmake ..
 make -j7
 ./test_explict      # explic usage of MyYoloInference library
@@ -53,7 +54,6 @@ make -j7
 
 ![yolo11 obb](README/result-obb.jpg)
 
-
 ## Other Tools
 
 install yolo:
@@ -71,4 +71,3 @@ yolo export model=yolo11n-seg.pt format=onnx
 use Netron:
 
 ![onnx info](README/onnx-info.jpg)
-
