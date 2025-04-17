@@ -12,6 +12,7 @@ class InferenceClassify : public Inference {
  public:
   std::vector<YOLO_RESULT> process(const std::vector<cv::Mat> &ptr) override;
   void draw() override;
+  std::string str() override;
 };
 
 }  // namespace my_yolo

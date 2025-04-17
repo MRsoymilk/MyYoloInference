@@ -2,6 +2,7 @@
 #define DEFINITIONS_H
 
 #include <opencv2/core/mat.hpp>
+
 namespace my_yolo {
 
 enum class TASK { UNKNOWN = 0, DETECT, SEGMENT, CLASSIFY, POSE, OBB };

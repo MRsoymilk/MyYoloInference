@@ -13,6 +13,7 @@ class MYYOLOINFERENCE_API MyYoloInference {
   virtual ~MyYoloInference();
   bool loadModel(const char* path, const int& metadata_size = 2048);
   bool inference(const char* input_path, const char* output_path);
+  bool inference(const void* image_data, unsigned int image_size, char* out_json, unsigned int* out_json_size);
   void setModelImgSize(const int& width, const int& height);
   void setNMS(const float& threshold);
   void setConfidence(const float& threshold);
@@ -28,6 +29,8 @@ class MYYOLOINFERENCE_API MyYoloInference {
 extern "C" {
 MYYOLOINFERENCE_API bool loadModel(const char* path, int metadata_size = 2048);
 MYYOLOINFERENCE_API bool inference(const char* input_path, const char* output_path);
+MYYOLOINFERENCE_API bool inference_binary(const void* image_data, unsigned int image_size, char* out_json,
+                                          unsigned int* out_json_size);
 MYYOLOINFERENCE_API void setModelImgSize(int width, int height);
 MYYOLOINFERENCE_API void setNMS(float threshold);
 MYYOLOINFERENCE_API void setConfidence(float threshold);

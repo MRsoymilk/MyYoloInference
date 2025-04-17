@@ -111,15 +111,14 @@ static const std::vector<std::pair<int, int>> limb_pairs = {
 
 void InferencePose::draw() {
   int thickness = 1;
-  float scale_x = 1.0;
-  float scale_y = 1.0;
+  // float scale_x = 1.0;
+  // float scale_y = 1.0;
 
   for (const auto &res : m_result) {
     float left = res.bbox.x;
     float top = res.bbox.y;
     // handle box
-    cv::Rect scaled_bbox(cv::Point(res.bbox.x * scale_x, res.bbox.y * scale_y),
-                         cv::Size(res.bbox.width * scale_x, res.bbox.height * scale_y));
+    cv::Rect scaled_bbox(cv::Point(res.bbox.x, res.bbox.y), cv::Size(res.bbox.width, res.bbox.height));
     cv::rectangle(m_image, scaled_bbox, Utils::Color(res.class_idx), 2);
 
     // handle label
@@ -142,8 +141,8 @@ void InferencePose::draw() {
         continue;
       }
 
-      cv::Point2f p1(pt1.x * scale_x, pt1.y * scale_y);
-      cv::Point2f p2(pt2.x * scale_x, pt2.y * scale_y);
+      cv::Point2f p1(pt1.x, pt1.y);
+      cv::Point2f p2(pt2.x, pt2.y);
       cv::line(m_image, p1, p2, cv::Scalar(0, 255, 0), 2);
     }
 
@@ -153,10 +152,47 @@ void InferencePose::draw() {
       if (pt.x < 0 || pt.y < 0) {
         continue;
       }
-      cv::Point2f scaled_pt(pt.x * scale_x, pt.y * scale_y);
-      cv::circle(m_image, scaled_pt, 3, cv::Scalar(0, 0, 255), -1);
+      cv::circle(m_image, cv::Point2f{pt.x, pt.y}, 3, cv::Scalar(0, 0, 255), -1);
     }
   }
+}
+
+std::string InferencePose::str() {
+  std::stringstream ss;
+  ss << "{";
+  ss << "\"pose\":[";
+
+  for (size_t i = 0; i < m_result.size(); ++i) {
+    const auto &res = m_result[i];
+    ss << "{";
+    ss << "\"" << m_info.class_names[res.class_idx] << "\":{";
+    ss << "\"confidence\":" << res.confidence << ",";
+    ss << "\"x\":" << res.bbox.x << ",";
+    ss << "\"y\":" << res.bbox.y << ",";
+    ss << "\"w\":" << res.bbox.width << ",";
+    ss << "\"h\":" << res.bbox.height << ",";
+    ss << "\"keypoints\":{";
+    for (int j = 0; j < res.keypoints.size(); ++j) {
+      const auto &pt = res.keypoints.at(j);
+      if (pt.x < 0 || pt.y < 0) {
+        continue;
+      }
+      ss << "\"" << j << "\":";
+      ss << "{" << "\"x\":" << pt.x << "," << "\"y\":" << pt.y << "}";
+      if (j != res.keypoints.size() - 1) {
+        ss << ",";
+      }
+    }
+    ss << "}";
+    ss << "}}";
+    if (i != m_result.size() - 1) {
+      ss << ",";
+    }
+  }
+
+  ss << "]";
+  ss << "}";
+  return ss.str();
 }
 
 }  // namespace my_yolo

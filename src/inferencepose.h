@@ -1,6 +1,8 @@
 #ifndef INFERENCEPOSE_H
 #define INFERENCEPOSE_H
+
 #include "inference.h"
+
 namespace my_yolo {
 class InferencePose : public Inference {
  public:
@@ -10,6 +12,7 @@ class InferencePose : public Inference {
  public:
   std::vector<YOLO_RESULT> process(const std::vector<cv::Mat> &) override;
   void draw() override;
+  std::string str() override;
 };
 
 }  // namespace my_yolo

@@ -11,7 +11,6 @@
 #include "inference.h"
 #include "inferencefactory.h"
 #include "metadata.h"
-#include "utils.h"
 
 namespace my_yolo {
 
@@ -133,6 +132,56 @@ class MyYoloInference::Impl {
     return true;
   }
 
+  bool inference(const void* image_data, unsigned int image_size, char* out_json, unsigned int* out_json_size) {
+    // 1. decode image
+    std::vector<uint8_t> buf((const uint8_t*)image_data, (const uint8_t*)image_data + image_size);
+    cv::Mat image = cv::imdecode(buf, cv::IMREAD_COLOR);
+    if (image.empty()) {
+      std::cerr << "Failed to decode image from memory!" << std::endl;
+      return false;
+    }
+
+    // 2. preprocess
+    cv::dnn::Image2BlobParams params;
+    params.scalefactor = cv::Scalar(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
+    params.size = cv::Size(m_info.model_width, m_info.model_height);
+    params.swapRB = true;
+    params.datalayout = cv::dnn::DNN_LAYOUT_NCHW;
+    params.paddingmode = cv::dnn::ImagePaddingMode::DNN_PMODE_LETTERBOX;
+    params.borderValue = cv::Scalar(114, 114, 114);
+
+    cv::Mat blob = cv::dnn::blobFromImageWithParams(image, params);
+    m_net.setInput(blob);
+
+    // 3. opencv inference
+    std::vector<cv::Mat> outputs;
+    try {
+      m_net.forward(outputs, m_net.getUnconnectedOutLayersNames());
+    } catch (const cv::Exception& e) {
+      std::cerr << e.what() << std::endl;
+      return false;
+    }
+
+    // 4. postprocess
+    std::unique_ptr<Inference> fc = InferenceFactory::Process(image, m_info);
+    std::vector<YOLO_RESULT> results = fc->process(outputs);
+
+    if (results.empty()) {
+      std::cerr << "Inference result is empty!" << std::endl;
+      m_net = cv::dnn::Net();
+      return false;
+    }
+
+    // 5. get json
+    auto val = fc->str();
+    *out_json_size = val.size();
+    std::strncpy(out_json, val.c_str(), *out_json_size - 1);
+    out_json[*out_json_size - 1] = '\0';
+    // reset net
+    m_net = cv::dnn::Net();
+    return true;
+  }
+
   void setModelImgSize(const int& width, const int& height) {
     m_info.model_width = width;
     m_info.model_height = height;
@@ -178,6 +227,11 @@ bool MyYoloInference::loadModel(const char* path, const int& metadata_size) {
 
 bool MyYoloInference::inference(const char* input_path, const char* output_path) {
   return m_impl->inference(input_path, output_path);
+}
+
+bool MyYoloInference::inference(const void* image_data, unsigned int image_size, char* out_json,
+                                unsigned int* out_json_size) {
+  return m_impl->inference(image_data, image_size, out_json, out_json_size);
 }
 
 void MyYoloInference::setModelImgSize(const int& width, const int& height) { m_impl->setModelImgSize(width, height); }

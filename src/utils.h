@@ -3,10 +3,20 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "base64.h"
+
 class Utils {
  public:
   Utils();
   ~Utils();
+
+  static std::string Img2Base64(const cv::Mat& img) {
+    // encode as PNG
+    std::vector<uchar> buf;
+    cv::imencode(".png", img, buf);
+    std::string encoded = "data:image/png;base64," + base64_encode(buf.data(), buf.size(), false);
+    return encoded;
+  }
 
   static cv::Mat Letterbox(const cv::Mat& img, const cv::Size& new_shape,
                            const cv::Scalar& color = cv::Scalar(114, 114, 114), bool scale_up = true) {

@@ -56,4 +56,22 @@ void InferenceClassify::draw() {
   }
 }
 
+std::string InferenceClassify::str() {
+  std::stringstream ss;
+  ss << "{";
+  ss << "\"classify\":[";
+
+  for (size_t i = 0; i < m_result.size(); ++i) {
+    const auto &res = m_result[i];
+    ss << "{\"" << m_info.class_names[res.class_idx] << "\":" << res.confidence << "}";
+    if (i != m_result.size() - 1) {
+      ss << ",";
+    }
+  }
+
+  ss << "]";
+  ss << "}";
+  return ss.str();
+}
+
 }  // namespace my_yolo

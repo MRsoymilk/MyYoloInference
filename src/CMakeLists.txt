@@ -21,9 +21,11 @@ add_library(MyYoloInference SHARED
     definitions.h
     utils.h
     utils.cpp
+    ../vendor/base64.h
+    ../vendor/base64.cpp
 )
 
-target_include_directories(MyYoloInference PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(MyYoloInference PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/vendor)
 target_link_libraries(MyYoloInference PRIVATE ${OpenCV_LIBS})
 
 set_target_properties(MyYoloInference PROPERTIES

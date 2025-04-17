@@ -16,6 +16,9 @@
 ## Vendor
 
 - [Netron is a viewer for neural network, deep learning and machine learning models.](https://netron.app/)
+- [JSON Editor Online](https://jsoneditoronline.org)
+- [cpp-base64](https://github.com/ReneNyffenegger/cpp-base64)
+- [Base64 to Image Decode](https://www.rapidtables.com/web/tools/base64-to-image.html)
 
 ## Usage
 
@@ -23,8 +26,9 @@
 mkdir build
 cmake ..
 make -j7
-./test_explict # explic usage of MyYoloInference library
-./test_implict # implic usage of MyYoloInference library
+./test_explict      # explic usage of MyYoloInference library
+./test_implict      # implic usage of MyYoloInference library
+./test_binary_input # binary image in, json format string out
 ```
 
 ## Result
@@ -67,3 +71,4 @@ yolo export model=yolo11n-seg.pt format=onnx
 use Netron:
 
 ![onnx info](README/onnx-info.jpg)
+

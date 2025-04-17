@@ -71,4 +71,29 @@ void InferenceDetect::draw() {
   }
 }
 
+std::string InferenceDetect::str() {
+  std::stringstream ss;
+  ss << "{";
+  ss << "\"detect\":[";
+
+  for (size_t i = 0; i < m_result.size(); ++i) {
+    const auto& res = m_result[i];
+    ss << "{";
+    ss << "\"" << m_info.class_names[res.class_idx] << "\":{";
+    ss << "\"confidence\":" << res.confidence << ",";
+    ss << "\"x\":" << res.bbox.x << ",";
+    ss << "\"y\":" << res.bbox.y << ",";
+    ss << "\"w\":" << res.bbox.width << ",";
+    ss << "\"h\":" << res.bbox.height;
+    ss << "}}";
+    if (i != m_result.size() - 1) {
+      ss << ",";
+    }
+  }
+
+  ss << "]";
+  ss << "}";
+  return ss.str();
+}
+
 }  // namespace my_yolo

@@ -143,4 +143,29 @@ void InferenceOBB::draw() {
     cv::putText(m_image, label, cv::Point(left - 1.5, top - 2.5), cv::FONT_HERSHEY_SIMPLEX, 0.6, text_color, thickness);
   }
 }
+std::string InferenceOBB::str() {
+  std::stringstream ss;
+  ss << "{";
+  ss << "\"obb\":[";
+
+  for (size_t i = 0; i < m_result.size(); ++i) {
+    const auto& res = m_result[i];
+    ss << "{";
+    ss << "\"" << m_info.class_names[res.class_idx] << "\":{";
+    ss << "\"x\":" << res.bbox.x << ",";
+    ss << "\"y\":" << res.bbox.y << ",";
+    ss << "\"w\":" << res.bbox.width << ",";
+    ss << "\"h\":" << res.bbox.height << ",";
+    ss << "\"angle\":" << res.angle;
+    ss << "}}";
+    if (i != m_result.size() - 1) {
+      ss << ",";
+    }
+  }
+
+  ss << "]";
+  ss << "}";
+  return ss.str();
+}
+
 }  // namespace my_yolo
