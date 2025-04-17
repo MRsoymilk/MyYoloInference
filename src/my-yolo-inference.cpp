@@ -83,12 +83,23 @@ class MyYoloInference::Impl {
       return false;
     }
 
-    cv::Mat img;
-    cv::cvtColor(image, img, cv::COLOR_RGB2BGR);
+    // cv::Mat img;
+    // cv::cvtColor(image, img, cv::COLOR_RGB2BGR);
 
-    cv::Mat preprocessed_img = Utils::Letterbox(img, {m_info.model_width, m_info.model_height});
-    cv::Mat blob =
-        cv::dnn::blobFromImage(preprocessed_img, 1.0 / 255.0, cv::Size(m_info.model_width, m_info.model_height));
+    // cv::Mat preprocessed_img = Utils::Letterbox(img, {m_info.model_width, m_info.model_height});
+    // cv::Mat blob =
+    //     cv::dnn::blobFromImage(preprocessed_img, 1.0 / 255.0, cv::Size(m_info.model_width, m_info.model_height));
+
+    cv::dnn::Image2BlobParams params;
+    params.scalefactor = cv::Scalar(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
+    params.size = cv::Size(m_info.model_width, m_info.model_height);
+    params.swapRB = true;
+    params.datalayout = cv::dnn::DNN_LAYOUT_NCHW;
+    params.paddingmode = cv::dnn::ImagePaddingMode::DNN_PMODE_LETTERBOX;
+    params.borderValue = cv::Scalar(114, 114, 114);
+
+    cv::Mat blob = cv::dnn::blobFromImageWithParams(image, params);
+
     m_net.setInput(blob);
 
     // 2. opencv inference
@@ -105,6 +116,7 @@ class MyYoloInference::Impl {
 
     if (results.empty()) {
       std::cerr << "Failed to run Interface!" << std::endl;
+      m_net = cv::dnn::Net();
       return false;
     }
 

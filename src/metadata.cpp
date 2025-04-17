@@ -111,7 +111,7 @@ void Metadata::analysis(const std::string& data) {
 
       size_t pos = item.find(": ");
       if (pos != std::string::npos) {
-        item = item.substr(pos + 2);  // 取 `:` 后面的部分
+        item = item.substr(pos + 2);
       }
 
       list.push_back(item);

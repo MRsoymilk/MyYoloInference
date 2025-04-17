@@ -2,8 +2,6 @@ add_library(MyYoloInference SHARED
     global.h
     my-yolo-inference.h
     my-yolo-inference.cpp
-    vendor/base64.h
-    vendor/base64.cpp
     metadata.h
     metadata.cpp
     inference.h
