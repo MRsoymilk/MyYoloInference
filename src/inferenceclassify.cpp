@@ -32,7 +32,7 @@ std::vector<YOLO_RESULT> InferenceClassify::process(const std::vector<cv::Mat> &
   return m_result;
 }
 
-void InferenceClassify::draw() {
+cv::Mat InferenceClassify::draw() {
   int base_line = 0;
   int padding = 5;
   int start_x = 10;
@@ -54,6 +54,7 @@ void InferenceClassify::draw() {
                 cv::Scalar(255, 255, 255), thickness);
     start_x += text_size.width + padding;
   }
+  return m_image;
 }
 
 std::string InferenceClassify::str() {

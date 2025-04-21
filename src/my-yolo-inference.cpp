@@ -23,7 +23,7 @@ class MyYoloInference::Impl {
  public:
   Impl() {}
 
-  virtual ~Impl() {}
+  virtual ~Impl() { m_net = cv::dnn::Net(); }
 
   bool loadModel(const char* path, const int& metadata_size = 2048) {
     if (m_model_loaded[path]) {
@@ -75,33 +75,18 @@ class MyYoloInference::Impl {
   }
 
   bool inference(const char* input_path, const char* output_path) {
-    // 1. preprocess
+    // 1. read image
     cv::Mat image = cv::imread(input_path);
     if (image.empty()) {
       std::cerr << "Failed to read image!" << std::endl;
       return false;
     }
 
-    // cv::Mat img;
-    // cv::cvtColor(image, img, cv::COLOR_RGB2BGR);
-
-    // cv::Mat preprocessed_img = Utils::Letterbox(img, {m_info.model_width, m_info.model_height});
-    // cv::Mat blob =
-    //     cv::dnn::blobFromImage(preprocessed_img, 1.0 / 255.0, cv::Size(m_info.model_width, m_info.model_height));
-
-    cv::dnn::Image2BlobParams params;
-    params.scalefactor = cv::Scalar(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
-    params.size = cv::Size(m_info.model_width, m_info.model_height);
-    params.swapRB = true;
-    params.datalayout = cv::dnn::DNN_LAYOUT_NCHW;
-    params.paddingmode = cv::dnn::ImagePaddingMode::DNN_PMODE_LETTERBOX;
-    params.borderValue = cv::Scalar(114, 114, 114);
-
-    cv::Mat blob = cv::dnn::blobFromImageWithParams(image, params);
-
+    // 2. preprocess
+    cv::Mat blob = preprocess(image);
     m_net.setInput(blob);
 
-    // 2. opencv inference
+    // 3. opencv inference
     std::vector<cv::Mat> outputs;
     try {
       m_net.forward(outputs, m_net.getUnconnectedOutLayersNames());
@@ -109,13 +94,12 @@ class MyYoloInference::Impl {
       std::cerr << e.what() << std::endl;
     }
 
-    // 3. handle outputs
+    // 4. handle outputs
     std::unique_ptr<Inference> fc = InferenceFactory::Process(image, m_info);
     std::vector<YOLO_RESULT> results = fc->process(outputs);
 
     if (results.empty()) {
       std::cerr << "Failed to run Interface!" << std::endl;
-      m_net = cv::dnn::Net();
       return false;
     }
 
@@ -127,8 +111,6 @@ class MyYoloInference::Impl {
     }
     cv::imshow("img", image);
     cv::waitKey();
-
-    m_net = cv::dnn::Net();
     return true;
   }
 
@@ -142,15 +124,7 @@ class MyYoloInference::Impl {
     }
 
     // 2. preprocess
-    cv::dnn::Image2BlobParams params;
-    params.scalefactor = cv::Scalar(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
-    params.size = cv::Size(m_info.model_width, m_info.model_height);
-    params.swapRB = true;
-    params.datalayout = cv::dnn::DNN_LAYOUT_NCHW;
-    params.paddingmode = cv::dnn::ImagePaddingMode::DNN_PMODE_LETTERBOX;
-    params.borderValue = cv::Scalar(114, 114, 114);
-
-    cv::Mat blob = cv::dnn::blobFromImageWithParams(image, params);
+    cv::Mat blob = preprocess(image);
     m_net.setInput(blob);
 
     // 3. opencv inference
@@ -168,7 +142,6 @@ class MyYoloInference::Impl {
 
     if (results.empty()) {
       std::cerr << "Inference result is empty!" << std::endl;
-      m_net = cv::dnn::Net();
       return false;
     }
 
@@ -177,8 +150,42 @@ class MyYoloInference::Impl {
     *out_json_size = val.size();
     std::strncpy(out_json, val.c_str(), *out_json_size - 1);
     out_json[*out_json_size - 1] = '\0';
-    // reset net
-    m_net = cv::dnn::Net();
+    return true;
+  }
+
+  bool inference(ImageData* img_data) {
+    // 1. decode image
+    if (img_data == nullptr || img_data->data == nullptr) {
+      std::cerr << "Invalid image data!" << std::endl;
+      return false;
+    }
+
+    cv::Mat image(img_data->height, img_data->width, CV_8UC3, img_data->data);
+
+    // 2. preprocess
+    cv::Mat blob = preprocess(image);
+    m_net.setInput(blob);
+
+    // 3. inference
+    std::vector<cv::Mat> outputs;
+    try {
+      m_net.forward(outputs, m_net.getUnconnectedOutLayersNames());
+    } catch (const cv::Exception& e) {
+      std::cerr << e.what() << std::endl;
+      return false;
+    }
+
+    // 4. postprocess
+    std::unique_ptr<Inference> fc = InferenceFactory::Process(image, m_info);
+    std::vector<YOLO_RESULT> results = fc->process(outputs);
+    if (results.empty()) {
+      std::cerr << "Inference result is empty!" << std::endl;
+      return false;
+    }
+
+    // 5. get result
+    cv::Mat res = fc->draw();
+    res.copyTo(cv::Mat(img_data->height, img_data->width, CV_8UC3, img_data->data));
     return true;
   }
 
@@ -210,6 +217,27 @@ class MyYoloInference::Impl {
     }
     std::cout << std::endl;
   }
+
+ private:
+  cv::Mat preprocess(const cv::Mat& image) {
+    // cv::Mat img;
+    // cv::cvtColor(image, img, cv::COLOR_RGB2BGR);
+
+    // cv::Mat preprocessed_img = Utils::Letterbox(img, {m_info.model_width, m_info.model_height});
+    // cv::Mat blob =
+    //     cv::dnn::blobFromImage(preprocessed_img, 1.0 / 255.0, cv::Size(m_info.model_width, m_info.model_height));
+
+    cv::dnn::Image2BlobParams params;
+    params.scalefactor = cv::Scalar(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0);
+    params.size = cv::Size(m_info.model_width, m_info.model_height);
+    params.swapRB = true;
+    params.datalayout = cv::dnn::DNN_LAYOUT_NCHW;
+    params.paddingmode = cv::dnn::ImagePaddingMode::DNN_PMODE_LETTERBOX;
+    params.borderValue = cv::Scalar(114, 114, 114);
+
+    cv::Mat blob = cv::dnn::blobFromImageWithParams(image, params);
+    return blob;
+  }
 };
 
 MyYoloInference::MyYoloInference() : m_impl(new Impl()) {}
@@ -233,6 +261,8 @@ bool MyYoloInference::inference(const void* image_data, unsigned int image_size,
                                 unsigned int* out_json_size) {
   return m_impl->inference(image_data, image_size, out_json, out_json_size);
 }
+
+bool MyYoloInference::inference(ImageData* image_data) { return m_impl->inference(image_data); }
 
 void MyYoloInference::setModelImgSize(const int& width, const int& height) { m_impl->setModelImgSize(width, height); }
 

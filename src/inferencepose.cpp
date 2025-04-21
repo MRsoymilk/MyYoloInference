@@ -109,7 +109,7 @@ static const std::vector<std::pair<int, int>> limb_pairs = {
     {11, 12}   // left hip - right hip
 };
 
-void InferencePose::draw() {
+cv::Mat InferencePose::draw() {
   int thickness = 1;
   // float scale_x = 1.0;
   // float scale_y = 1.0;
@@ -155,6 +155,7 @@ void InferencePose::draw() {
       cv::circle(m_image, cv::Point2f{pt.x, pt.y}, 3, cv::Scalar(0, 0, 255), -1);
     }
   }
+  return m_image;
 }
 
 std::string InferencePose::str() {

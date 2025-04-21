@@ -49,6 +49,14 @@ struct MODEL_INFO {
   KEYPOINT kpt;
 };
 
+class ImageData {
+ public:
+  unsigned char* data;
+  int width;
+  int height;
+  int channels;
+};
+
 }  // namespace my_yolo
 
 #endif  // DEFINITIONS_H

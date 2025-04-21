@@ -52,7 +52,7 @@ std::vector<YOLO_RESULT> InferenceDetect::process(const std::vector<cv::Mat>& v)
   return m_result;
 }
 
-void InferenceDetect::draw() {
+cv::Mat InferenceDetect::draw() {
   int thickness = 1;
   int line_width = 2;
 
@@ -69,6 +69,7 @@ void InferenceDetect::draw() {
     cv::rectangle(m_image, rect_to_fill, Utils::Color(res.class_idx), -1);
     cv::putText(m_image, label, cv::Point(left - 1.5, top - 2.5), cv::FONT_HERSHEY_SIMPLEX, 0.6, text_color, thickness);
   }
+  return m_image;
 }
 
 std::string InferenceDetect::str() {

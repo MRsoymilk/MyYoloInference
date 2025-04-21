@@ -15,7 +15,7 @@ class Inference {
 
  public:
   virtual std::vector<YOLO_RESULT> process(const std::vector<cv::Mat>&) = 0;
-  virtual void draw() {};
+  virtual cv::Mat draw() { return cv::Mat(); };
   virtual std::string str() { return ""; };
 
   MODEL_INFO m_info;

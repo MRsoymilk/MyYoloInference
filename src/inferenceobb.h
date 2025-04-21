@@ -11,7 +11,7 @@ class InferenceOBB : public Inference {
   // Inference interface
  public:
   std::vector<YOLO_RESULT> process(const std::vector<cv::Mat> &) override;
-  void draw() override;
+  cv::Mat draw() override;
   std::string str() override;
 };
 

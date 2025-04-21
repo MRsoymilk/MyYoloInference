@@ -106,7 +106,7 @@ std::vector<YOLO_RESULT> InferenceSegment::process(const std::vector<cv::Mat> &o
   return output;
 }
 
-void InferenceSegment::draw() {
+cv::Mat InferenceSegment::draw() {
   int thickness = 1;
   cv::Mat mask = m_image.clone();
   for (const auto &res : m_result) {
@@ -127,6 +127,7 @@ void InferenceSegment::draw() {
     cv::rectangle(m_image, rect_to_fill, Utils::Color(res.class_idx), -1);
     cv::putText(m_image, label, cv::Point(left - 1.5, top - 2.5), cv::FONT_HERSHEY_SIMPLEX, 0.6, text_color, thickness);
   }
+  return m_image;
 }
 
 std::string InferenceSegment::str() {
