@@ -30,6 +30,7 @@ make -j7
 ./test_explict      # explic usage of MyYoloInference library
 ./test_implict      # implic usage of MyYoloInference library
 ./test_binary_input # binary image in, json format string out
+./test_video your_model your_video # video test
 ```
 
 ## Result
@@ -53,6 +54,10 @@ make -j7
 ### obb
 
 ![yolo11 obb](README/result-obb.jpg)
+
+### video
+
+![video test](README/ikun.gif)
 
 ## Other Tools
 
