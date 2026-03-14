@@ -20,11 +20,19 @@ class MyYoloInference::Impl {
   MODEL_INFO m_info;
   cv::dnn::Net m_net;
   std::unordered_map<const char*, bool> m_model_loaded;
+  bool m_enableCUDA = false;
 
  public:
   Impl() {}
 
   virtual ~Impl() { m_net = cv::dnn::Net(); }
+
+  bool enableCUDA() {
+    if(cv::cuda::getCudaEnabledDeviceCount() > 0) {
+      m_enableCUDA = true;
+    }
+    return m_enableCUDA;
+  }
 
   bool loadModel(const char* path, const int& metadata_size = 2048) {
     if (m_model_loaded[path]) {
@@ -63,11 +71,12 @@ class MyYoloInference::Impl {
     if (m_net.empty()) {
       return false;
     }
-    if (cv::cuda::getCudaEnabledDeviceCount() > 0) {
+    if(m_enableCUDA) {
       m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
       m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
       m_net.enableFusion(false);
-    } else {
+    }
+    else {
       m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_DEFAULT);
       m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
     }
@@ -249,6 +258,11 @@ MyYoloInference& MyYoloInference::getInstance() {
 }
 
 MyYoloInference::~MyYoloInference() { delete m_impl; }
+
+bool MyYoloInference::enableCUDA()
+{
+
+}
 
 bool MyYoloInference::loadModel(const char* path, const int& metadata_size) {
   return m_impl->loadModel(path, metadata_size);
