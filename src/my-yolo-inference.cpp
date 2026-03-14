@@ -261,7 +261,7 @@ MyYoloInference::~MyYoloInference() { delete m_impl; }
 
 bool MyYoloInference::enableCUDA()
 {
-
+  return m_impl->enableCUDA();
 }
 
 bool MyYoloInference::loadModel(const char* path, const int& metadata_size) {
