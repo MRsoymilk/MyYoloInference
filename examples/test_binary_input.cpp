@@ -7,7 +7,7 @@
 #include "test.h"
 
 int main(int argc, char* argv[]) {
-  const std::string dir_model = "../examples/res/";
+  const std::string dir_model = "./examples/res/";
   const std::string dir_output = "./";
 
   std::vector<PARAMS> params{

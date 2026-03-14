@@ -22,15 +22,38 @@
 
 ## Usage
 
+### Build MyYoloInference library only
+
 ```bash
 mkdir build
 cd build
 cmake ..
+
+make -j7
+```
+
+### Build with examples
+
+```bash
+mkdir build
+cmake -B build -S . -DBUILD_EXAMPLES=ON
+
+cd build
 make -j7
 ./test_explict      # explic usage of MyYoloInference library
 ./test_implict      # implic usage of MyYoloInference library
 ./test_binary_input # binary image in, json format string out
 ./test_video your_model your_video # video test
+```
+
+### Integration with other projects
+
+`CMakeLists.txt`:
+
+```cmake
+add_subdirectory(vendor/path_to_MyYoloInference)
+
+target_link_libraries(name_of_your_project PRIVATE MyYoloInference)
 ```
 
 ## Result

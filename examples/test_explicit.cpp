@@ -54,7 +54,7 @@ int main() {
     return -1;
   }
 
-  const std::string dir_model = "../examples/res/";
+  const std::string dir_model = "./examples/res/";
   const std::string dir_output = "./";
   std::vector<PARAMS> params{
       {dir_model + "yolo11n-seg.onnx", 2048, dir_model + "apple.jpg", dir_output + "test_seg.jpg"},
