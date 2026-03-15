@@ -21,6 +21,12 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
+  char json_buf[10240];
+  unsigned int json_size = 0;
+  MY_YOLO.getModelInfo(json_buf, &json_size);
+  std::string json(json_buf, json_size);
+  std::cout << json << std::endl;
+
   cv::VideoCapture cap(video);
   if (!cap.isOpened()) {
     std::cerr << "Error loading video: " << video << std::endl;

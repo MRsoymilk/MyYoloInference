@@ -20,6 +20,16 @@ int main(int argc, char* argv[]) {
 
   for (const auto& input : params) {
     bool loaded = MY_YOLO.loadModel(input.model_path.c_str(), input.metadata_size);
+    if(!loaded) {
+      std::cerr << "Failed to load model: " << input.model_path << std::endl;
+      continue;
+    }
+
+    char json_buf[10240];
+    unsigned int json_size = 0;
+    MY_YOLO.getModelInfo(json_buf, &json_size);
+    std::string json(json_buf, json_size);
+    std::cout << json << std::endl;
 
     std::ifstream file(input.input_img, std::ios::binary | std::ios::ate);
     if (!file) {

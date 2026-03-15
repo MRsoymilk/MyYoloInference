@@ -84,6 +84,48 @@ class MyYoloInference::Impl {
     return true;
   }
 
+  void getModelInfo(char* out_json, unsigned int* out_json_size) {
+    std::stringstream ss;
+
+    ss << "{";
+
+    ss << "\"confidence_threshold\":" << m_info.confidence_threshold << ",";
+    ss << "\"nms_threshold\":" << m_info.nms_threshold << ",";
+    ss << "\"mask_threshold\":" << m_info.mask_threshold << ",";
+
+    ss << "\"class_names\":[";
+    for (size_t i = 0; i < m_info.class_names.size(); ++i) {
+      ss << "\"" << m_info.class_names[i] << "\"";
+      if (i != m_info.class_names.size() - 1)
+        ss << ",";
+    }
+    ss << "],";
+
+    ss << "\"nc\":" << m_info.nc << ",";
+    ss << "\"model_width\":" << m_info.model_width << ",";
+    ss << "\"model_height\":" << m_info.model_height << ",";
+
+    std::string task_str;
+    switch (m_info.task) {
+      case TASK::UNKNOWN:  task_str = "unknown"; break;
+      case TASK::DETECT:   task_str = "detect"; break;
+      case TASK::SEGMENT:  task_str = "segment"; break;
+      case TASK::CLASSIFY: task_str = "classify"; break;
+      case TASK::POSE:     task_str = "pose"; break;
+      case TASK::OBB:      task_str = "obb"; break;
+    }
+    ss << "\"task\":\"" << task_str << "\"";
+    ss << "}";
+
+    std::string json = ss.str();
+
+    if (out_json)
+      memcpy(out_json, json.c_str(), json.size());
+
+    if (out_json_size)
+      *out_json_size = json.size();
+  }
+
   bool inference(const char* input_path, const char* output_path) {
     // 1. read image
     cv::Mat image = cv::imread(input_path);
@@ -259,13 +301,16 @@ MyYoloInference& MyYoloInference::getInstance() {
 
 MyYoloInference::~MyYoloInference() { delete m_impl; }
 
-bool MyYoloInference::enableCUDA()
-{
+bool MyYoloInference::enableCUDA() {
   return m_impl->enableCUDA();
 }
 
 bool MyYoloInference::loadModel(const char* path, const int& metadata_size) {
   return m_impl->loadModel(path, metadata_size);
+}
+
+void MyYoloInference::getModelInfo(char *out_json, unsigned int *out_json_size) {
+  m_impl->getModelInfo(out_json, out_json_size);
 }
 
 bool MyYoloInference::inference(const char* input_path, const char* output_path) {
@@ -305,3 +350,11 @@ void setNMS(float threshold) { MY_YOLO.setNMS(threshold); }
 void setConfidence(float threshold) { MY_YOLO.setConfidence(threshold); }
 
 void setClasses(const char** classes, int count) { MY_YOLO.setClasses(classes, count); }
+
+bool enableCUDA() {
+  return MY_YOLO.enableCUDA();
+}
+
+void getModelInfo(char *out_json, unsigned int *out_json_size) {
+  MY_YOLO.getModelInfo(out_json, out_json_size);
+}

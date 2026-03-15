@@ -19,6 +19,13 @@ int main(int argc, char* argv[]) {
   for (const auto& input : params) {
     bool loaded = MY_YOLO.loadModel(input.model_path.c_str(), input.metadata_size);
     if (loaded) {
+
+      char json_buf[10240];
+      unsigned int json_size = 0;
+      MY_YOLO.getModelInfo(json_buf, &json_size);
+      std::string json(json_buf, json_size);
+      std::cout << json << std::endl;
+
       MY_YOLO.inference(input.input_img.c_str(), input.output_img.c_str());
     } else {
       std::cerr << "error: " << input.model_path << std::endl;

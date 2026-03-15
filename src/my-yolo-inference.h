@@ -15,6 +15,7 @@ class MYYOLOINFERENCE_API MyYoloInference {
   virtual ~MyYoloInference();
   bool enableCUDA();
   bool loadModel(const char* path, const int& metadata_size = 2048);
+  void getModelInfo(char* out_json, unsigned int* out_json_size);
   bool inference(const char* input_path, const char* output_path);
   bool inference(const void* image_data, unsigned int image_size, char* out_json, unsigned int* out_json_size);
   bool inference(ImageData* image_data);
@@ -33,6 +34,7 @@ class MYYOLOINFERENCE_API MyYoloInference {
 extern "C" {
 MYYOLOINFERENCE_API bool enableCUDA();
 MYYOLOINFERENCE_API bool loadModel(const char* path, int metadata_size = 2048);
+MYYOLOINFERENCE_API void getModelInfo(char* out_json, unsigned int* out_json_size);
 MYYOLOINFERENCE_API bool inference(const char* input_path, const char* output_path);
 MYYOLOINFERENCE_API bool inference_binary(const void* image_data, unsigned int image_size, char* out_json,
                                           unsigned int* out_json_size);

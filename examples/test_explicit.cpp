@@ -11,6 +11,7 @@
 
 typedef bool (*LoadModelFunc)(const char*, int);
 typedef bool (*InferenceFunc)(const char*, const char*);
+typedef void (*GetModelInfoFunc)(char*, unsigned int*);
 
 int main() {
   const char* dll_name =
@@ -27,6 +28,7 @@ int main() {
     return -1;
   }
   LoadModelFunc loadModel = (LoadModelFunc)GetProcAddress(handle, "loadModel");
+  GetModelInfoFunc getModelInfo = (GetModelInfoFunc)GetProcAddress(handle, "getModelInfo");
   InferenceFunc inference = (InferenceFunc)GetProcAddress(handle, "inference");
 #else
   void* handle = dlopen(dll_name, RTLD_LAZY);
@@ -38,13 +40,17 @@ int main() {
   if (!loadModel) {
     std::cerr << "Failed to get function: loadModel" << std::endl;
   }
+  GetModelInfoFunc getModelInfo = (GetModelInfoFunc)dlsym(handle, "getModelInfo");
+  if (!getModelInfo) {
+    std::cerr << "Failed to get function: getModelInfo" << std::endl;
+  }
   InferenceFunc inference = (InferenceFunc)dlsym(handle, "inference");
   if (!inference) {
     std::cerr << "Failed to get function: inference" << std::endl;
   }
 #endif
 
-  if (!loadModel || !inference) {
+  if (!loadModel || !getModelInfo || !inference) {
     std::cerr << "Failed to get function!" << std::endl;
 #ifdef _WIN32
     FreeLibrary(handle);
@@ -67,6 +73,13 @@ int main() {
   for (const auto& input : params) {
     bool loaded = loadModel(input.model_path.c_str(), input.metadata_size);
     if (loaded) {
+
+      char json_buf[10240];
+      unsigned int json_size = 0;
+      getModelInfo(json_buf, &json_size);
+      std::string json(json_buf, json_size);
+      std::cout << json << std::endl;
+
       inference(input.input_img.c_str(), input.output_img.c_str());
     } else {
       std::cerr << "error: " << input.model_path << std::endl;
