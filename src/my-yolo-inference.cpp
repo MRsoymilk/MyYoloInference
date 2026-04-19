@@ -200,8 +200,8 @@ class MyYoloInference::Impl {
     // 5. get json
     auto val = fc->str();
     *out_json_size = val.size();
-    std::strncpy(out_json, val.c_str(), *out_json_size - 1);
-    out_json[*out_json_size - 1] = '\0';
+    std::strncpy(out_json, val.c_str(), val.size());
+    out_json[val.size()] = '\0';
     return true;
   }
 

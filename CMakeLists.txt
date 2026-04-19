@@ -27,6 +27,7 @@ add_library(MyYoloInference SHARED
     src/utils.cpp
     src/utils.h
 )
+target_compile_definitions(MyYoloInference PRIVATE MYYOLOINFERENCE_LIBRARY)
 
 target_include_directories(MyYoloInference
     PUBLIC
@@ -42,7 +43,13 @@ set_target_properties(MyYoloInference PROPERTIES
 )
 
 add_subdirectory(vendor/base64)
+
+set(OpenCV_DIR "" CACHE PATH "Path to OpenCVConfig.cmake")
+if(OpenCV_DIR)
+    message(STATUS "Custom OpenCV_DIR: ${OpenCV_DIR}")
+endif()
 find_package(OpenCV REQUIRED)
+
 target_link_libraries(MyYoloInference
     PUBLIC
         base64

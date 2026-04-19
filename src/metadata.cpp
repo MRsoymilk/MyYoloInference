@@ -1,6 +1,7 @@
 #include "metadata.h"
 
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <regex>
 #include <string>
